@@ -1,0 +1,101 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  etcd:
+    image: bitnami/etcd:3.5
+    container_name: etcd
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+      - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd:2380
+      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_INITIAL_CLUSTER=etcd=http://etcd:2380
+      - ETCD_NAME=etcd
+    ports:
+      - "2379:2379"
+      - "2380:2380"
+    volumes:
+      - etcd_data:/bitnami/etcd
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "/opt/bitnami/etcd/bin/etcdctl", "endpoint", "health"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+
+  app1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - APP_ENV=development
+      - PYTHONUNBUFFERED=1
+    privileged: true
+    volumes:
+      - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+      - vmgrid_data_1:/var/lib/vmgrid
+    depends_on:
+      - etcd
+    ports:
+      - "5000:5000"
+    networks:
+      - app-network
+    command: python app.py
+
+  app2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - APP_ENV=development
+      - PYTHONUNBUFFERED=1
+    privileged: true
+    volumes:
+      - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+      - vmgrid_data_2:/var/lib/vmgrid
+    depends_on:
+      - etcd
+    ports:
+      - "5001:5000"
+    networks:
+      - app-network
+    command: python app.py
+
+  app3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - APP_ENV=development
+      - PYTHONUNBUFFERED=1
+    privileged: true
+    volumes:
+      - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+      - vmgrid_data_3:/var/lib/vmgrid
+    depends_on:
+      - etcd
+    ports:
+      - "5002:5000"
+    networks:
+      - app-network
+    command: python app.py
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  etcd_data:
+    driver: local
+  vmgrid_data_1:
+    driver: local
+  vmgrid_data_2:
+    driver: local
+  vmgrid_data_3:
+    driver: local

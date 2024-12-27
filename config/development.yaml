@@ -1,0 +1,7 @@
+# config/development.yaml
+server:
+  debug: true
+  workers: 1
+
+etcd:
+  host: "etcd"

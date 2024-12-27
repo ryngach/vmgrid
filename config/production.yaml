@@ -1,0 +1,7 @@
+# config/production.yaml
+server:
+  debug: false
+  workers: 4
+
+logging:
+  level: "WARNING"
